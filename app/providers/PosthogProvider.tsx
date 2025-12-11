@@ -18,6 +18,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       session_recording: {
         maskAllInputs: false,
         maskTextSelector: null,
+        blockSelector: "img",
       },
     });
   }, []);
