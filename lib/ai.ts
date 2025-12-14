@@ -191,9 +191,9 @@ async function sendDirectToApi(
   return readOpenAIStream(reader, onStream);
 }
 
-function useDirectApi(settings: ApiSettings): boolean {
+const shouldUseDirectApi = (settings: ApiSettings): boolean => {
   return Boolean(settings.provider && settings.model);
-}
+};
 
 export async function generateAction(
   goal: string,
@@ -241,7 +241,7 @@ export async function generateAction(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      if (useDirectApi(settings)) {
+      if (shouldUseDirectApi(settings)) {
         return await sendDirectToApi(messages, settings);
       } else {
         return await sendToBackend("step", messages);
@@ -286,7 +286,7 @@ export async function generateHelpResponse(
       },
     ];
 
-    if (useDirectApi(settings)) {
+    if (shouldUseDirectApi(settings)) {
       return await sendDirectToApi(messages, settings, onStream);
     } else {
       return await sendToBackend("help", messages, onStream);
@@ -320,7 +320,7 @@ export async function checkStepCompletion(
     ];
 
     let text: string;
-    if (useDirectApi(settings)) {
+    if (shouldUseDirectApi(settings)) {
       text = await sendDirectToApi(messages, settings);
     } else {
       text = await sendToBackend("check", messages);
@@ -359,7 +359,7 @@ export async function generateCoordinate(
     ];
 
     let text: string;
-    if (useDirectApi(settings)) {
+    if (shouldUseDirectApi(settings)) {
       text = await sendDirectToApi(messages, settings);
     } else {
       text = await sendToBackend("coordinates", messages);
