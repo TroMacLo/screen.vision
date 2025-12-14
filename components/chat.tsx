@@ -1,7 +1,7 @@
 "use client";
 
 import { MultimodalInput } from "@/components/multimodal-input";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useScreenShare } from "@/hooks/screenshare";
 import { useTaskPip } from "@/hooks/pip";
 import { useTasks } from "@/app/providers/TaskProvider";
@@ -85,24 +85,24 @@ export function Chat() {
   const [hasSubmittedProblem, setHasSubmittedProblem] = useState(false);
   const [showScreenshareModal, setShowScreenshareModal] = useState(false);
   const [showSafariSettingsGuide, setShowSafariSettingsGuide] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Initialize Safari settings state from localStorage
-  const [safariSettingsCompleted, setSafariSettingsCompleted] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(SAFARI_SETTINGS_STORAGE_KEY) === "true";
-  });
+  const [safariSettingsCompleted, setSafariSettingsCompleted] = useState(false);
+  const [hasAcceptedModalBefore, setHasAcceptedModalBefore] = useState(false);
+  const [browserIsSafari, setBrowserIsSafari] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Check if user has previously accepted the screenshare modal
-  const [hasAcceptedModalBefore] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(SCREENSHARE_MODAL_ACCEPTED_KEY) === "true";
-  });
-
-  // Check if browser is Safari (memoized to avoid recalculating)
-  const browserIsSafari = useMemo(() => isSafari(), []);
-
-  // Check if device is mobile (memoized to avoid recalculating)
-  const isMobile = useMemo(() => isMobileDevice(), []);
+  useEffect(() => {
+    setIsHydrated(true);
+    setSafariSettingsCompleted(
+      localStorage.getItem(SAFARI_SETTINGS_STORAGE_KEY) === "true"
+    );
+    setHasAcceptedModalBefore(
+      localStorage.getItem(SCREENSHARE_MODAL_ACCEPTED_KEY) === "true"
+    );
+    setBrowserIsSafari(isSafari());
+    setIsMobile(isMobileDevice());
+  }, []);
 
   // Handler to complete Safari settings and persist to localStorage
   const handleSafariSettingsComplete = () => {
@@ -312,8 +312,8 @@ export function Chat() {
     showSafariGuide,
   });
 
-  // Show mobile not supported message immediately
-  if (isMobile) {
+  // Show mobile not supported message after hydration
+  if (isHydrated && isMobile) {
     logWithTimestamp("RENDER: showing mobile not supported");
     return (
       <>
