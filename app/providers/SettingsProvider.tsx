@@ -1,19 +1,30 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useState,
+  useEffect,
+} from "react";
 
 const SETTINGS_STORAGE_KEY = "screen-vision-settings";
 
+export type Provider = "ollama" | "lmstudio";
+
+export const PROVIDER_URLS: Record<Provider, string> = {
+  ollama: "http://localhost:11434",
+  lmstudio: "http://localhost:1234",
+};
+
 export interface ApiSettings {
-  apiBaseUrl: string;
-  apiKey: string;
+  provider: Provider | null;
   model: string;
 }
 
 const DEFAULT_SETTINGS: ApiSettings = {
-  apiBaseUrl: "",
-  apiKey: "",
-  model: "gpt-4o",
+  provider: null,
+  model: "",
 };
 
 export interface SettingsContextType {
@@ -22,10 +33,12 @@ export interface SettingsContextType {
   isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
-  isUsingCustomApi: boolean;
+  isUsingLocalProvider: boolean;
 }
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(
+  undefined
+);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<ApiSettings>(DEFAULT_SETTINGS);
@@ -58,7 +71,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const openSettings = () => setIsSettingsOpen(true);
   const closeSettings = () => setIsSettingsOpen(false);
 
-  const isUsingCustomApi = Boolean(settings.apiBaseUrl && settings.apiKey);
+  const isUsingLocalProvider = Boolean(settings.provider && settings.model);
 
   return (
     <SettingsContext.Provider
@@ -68,7 +81,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         isSettingsOpen,
         openSettings,
         closeSettings,
-        isUsingCustomApi,
+        isUsingLocalProvider,
       }}
     >
       {children}

@@ -11,7 +11,7 @@ import { TaskScreen } from "./task-screen";
 import { SafariSettingsGuide } from "./safari-settings-guide";
 import { ScreenshareModal } from "./screenshare-modal";
 import { SettingsModal } from "./settings-modal";
-import { Monitor, Github, Settings } from "@geist-ui/icons";
+import { Monitor, Github, Settings, Cpu } from "@geist-ui/icons";
 
 const HISTORY_STATE_KEY = "screen-vision-session";
 
@@ -282,13 +282,6 @@ export function Chat() {
         <img src="/logo.png" height={40} width={180} />
       </div>
       <div className="flex items-center gap-2">
-        <button
-          onClick={openSettings}
-          className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Settings size={16} />
-          <span className="text-sm">Settings</span>
-        </button>
         <a
           href="https://github.com/bullmeza/screen.vision"
           target="_blank"
@@ -297,6 +290,15 @@ export function Chat() {
           <Github size={16} />
           <span className="text-sm">Star on GitHub</span>
         </a>
+
+        <button
+          onClick={openSettings}
+          className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Cpu size={16} />
+
+          <span className="text-sm">Local Mode</span>
+        </button>
       </div>
     </div>
   );
@@ -313,7 +315,6 @@ export function Chat() {
     logWithTimestamp("RENDER: showing mobile not supported");
     return (
       <>
-        <SettingsModal />
         <div className="flex justify-center items-center flex-col h-[85dvh]">
           {navbar}
           <div className="flex flex-col justify-center items-center max-w-[800px] w-full font-inter">
@@ -340,7 +341,6 @@ export function Chat() {
     logWithTimestamp("RENDER: showing Safari settings guide");
     return (
       <>
-        <SettingsModal />
         <div className="flex justify-center items-center flex-col h-[100dvh]">
           {navbar}
           <div className="flex flex-col justify-center items-center max-w-[800px] w-full font-inter">
@@ -367,6 +367,8 @@ export function Chat() {
           }}
           isLoading={isRequestingScreenShare}
         />
+        <SettingsModal />
+
         <div className="min-h-screen bg-grid-pattern">
           {navbar}
           <div className="flex justify-center items-center flex-col h-[80dvh]">

@@ -1,4 +1,4 @@
-import { ApiSettings } from "@/app/providers/SettingsProvider";
+import { ApiSettings, PROVIDER_URLS } from "@/app/providers/SettingsProvider";
 import {
   buildActionPrompt,
   buildHelpPrompt,
@@ -164,11 +164,15 @@ async function sendDirectToApi(
   settings: ApiSettings,
   onStream?: (message: string) => void
 ): Promise<string> {
-  const response = await fetch(`${settings.apiBaseUrl}/chat/completions`, {
+  if (!settings.provider) {
+    throw new Error("No provider configured");
+  }
+
+  const baseUrl = PROVIDER_URLS[settings.provider];
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.apiKey}`,
     },
     body: JSON.stringify({
       messages,
@@ -188,7 +192,7 @@ async function sendDirectToApi(
 }
 
 function useDirectApi(settings: ApiSettings): boolean {
-  return Boolean(settings.apiBaseUrl && settings.apiKey);
+  return Boolean(settings.provider && settings.model);
 }
 
 export async function generateAction(
