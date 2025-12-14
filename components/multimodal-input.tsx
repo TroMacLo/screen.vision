@@ -86,7 +86,14 @@ export function MultimodalInput({
     const osName = systemInfo.os.osName;
 
     setSuggestedActions([
-      { text: `Update ${osName}`, icon: "command" },
+      ...(osName === "macOS"
+        ? [{ text: `Update ${osName}`, icon: "command" }]
+        : [
+            {
+              text: `Uninstall Microsoft Copilot`,
+              icon: "trash",
+            },
+          ]),
       ...(osName !== "macOS"
         ? [{ text: "Change DNS to 1.1.1.1", icon: "globe" }]
         : [
