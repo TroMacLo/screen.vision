@@ -402,9 +402,17 @@ export function Chat() {
         {!isMobile && (
           <div className="mt-12 text-center text-sm text-gray-500 w-full absolute bottom-6 left-0 right-0">
             <p>
-              This is a demo of an open-source project. Enable Local Mode if
-              you&apos;re worried about data privacy.
-              <br />
+              This project is fully open-source. You can enable Local Mode or
+              host it yourself{" "}
+              <a
+                href="https://github.com/bullmeza/screen.vision?tab=readme-ov-file#self-hosting"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gray-600 transition-colors"
+              >
+                here
+              </a>
+              .
             </p>
           </div>
         )}
