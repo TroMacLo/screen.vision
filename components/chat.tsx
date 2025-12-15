@@ -264,11 +264,11 @@ export function Chat() {
         <a
           href="https://github.com/bullmeza/screen.vision"
           target="_blank"
-          className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 bg-black text-white border border-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
         >
           <Github size={16} />
           <span className="text-sm">Star on GitHub</span>
-          <span className="text-xs font-medium bg-gray-100 px-1.5 py-0.5 rounded-md">
+          <span className="text-xs font-medium bg-gray-100 px-1.5 py-0.5 rounded-md text-black">
             {githubStars >= 1000
               ? `${(githubStars / 1000).toFixed(1)}k`
               : githubStars}
