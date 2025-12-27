@@ -2,23 +2,6 @@
 
 ![Screen Vision Demo](demo.gif)
 
-## Models Used
-
-| Model              | Provider         | Purpose                                                                                |
-| ------------------ | ---------------- | -------------------------------------------------------------------------------------- |
-| **GPT-5.2**        | OpenAI           | Primary reasoning: generates step-by-step instructions and answers follow-up questions |
-| **Gemini 3 Flash** | Google AI Studio | Step verification: compares before/after screenshots to confirm action completion      |
-| **Qwen3-VL 30B**   | Fireworks AI     | Coordinate detection: locates specific UI elements on screen                           |
-
-## Privacy & Security
-
-Privacy is our top priority. Screen Vision is designed to process your data securely without retaining it.
-
-- **Zero Data Retention**: No images or screen recordings are stored on the server. All processing happens in real-time, and data is discarded immediately after analysis.
-- **Secure AI Processing**: Screenshots are sent to trusted LLM providers (OpenAI and Fireworks AI) solely for analysis. These providers adhere to strict data handling policies and do not store or use your data to train their models.
-  - [OpenAI Enterprise Privacy](https://platform.openai.com/docs/guides/your-data)
-  - [Fireworks AI Data Handling Policy](https://docs.fireworks.ai/guides/security_compliance/data_handling)
-
 ## How It Works
 
 The system is straightforward:
@@ -32,6 +15,30 @@ The system is straightforward:
 4. **You get one instruction at a time** — No information overload. Just "Click the blue Settings button in the top right" or "Scroll down to find Security"
 
 5. **Automatic progress detection** — When you complete a step, Screen Vision notices the screen changed and automatically gives you the next instruction
+
+## Models Used
+
+| Model              | Provider         | Purpose                                                                                |
+| ------------------ | ---------------- | -------------------------------------------------------------------------------------- |
+| **GPT-5.2**        | OpenAI           | Primary reasoning: generates step-by-step instructions and answers follow-up questions |
+| **Gemini 3 Flash** | Google AI Studio | Step verification: compares before/after screenshots to confirm action completion      |
+| **Qwen3-VL 30B**   | Fireworks AI     | Coordinate detection: locates specific UI elements on screen                           |
+
+## Privacy & Security
+
+Screen Vision is designed to process your data securely without retaining it.
+
+- **Zero Data Retention**: No images or screen recordings are stored on the server. All processing happens in real-time, and data is discarded immediately after analysis.
+- **Secure AI Processing**: Screenshots are sent to trusted LLM providers (OpenAI and Fireworks AI) solely for analysis. These providers adhere to strict data handling policies and do not store or use your data to train their models.
+  - [OpenAI Enterprise Privacy](https://platform.openai.com/docs/guides/your-data)
+  - [Fireworks AI Data Handling Policy](https://docs.fireworks.ai/guides/security_compliance/data_handling)
+
+## Tech Stack
+
+- **Frontend**: Next.js 13, React 18, Tailwind CSS, Zustand
+- **Backend**: FastAPI, Python
+- **AI**: OpenAI GPT models, Qwen-VL (via OpenRouter)
+- **UI**: Radix primitives, Framer Motion, Lucide icons
 
 **Frontend (Next.js + React)**
 
@@ -115,10 +122,3 @@ uvicorn api.index:app --host 0.0.0.0 --port 8000
 ```
 
 Or use the included `Procfile` for platforms like Railway or Heroku.
-
-## Tech Stack
-
-- **Frontend**: Next.js 13, React 18, Tailwind CSS, Zustand
-- **Backend**: FastAPI, Python
-- **AI**: OpenAI GPT models, Qwen-VL (via OpenRouter)
-- **UI**: Radix primitives, Framer Motion, Lucide icons
