@@ -1,15 +1,13 @@
 # Screen Vision
 
-Try for free at [screen.vision](https://screen.vision)
-
 https://github.com/user-attachments/assets/c84fc58d-5dc0-4997-85dd-81dad27f9089
 
 ## Models Used
 
 | Model             | Provider     | Purpose                                                                                |
 | ----------------- | ------------ | -------------------------------------------------------------------------------------- |
-| **GPT-5 Mini**    | OpenAI       | Primary reasoning: generates step-by-step instructions and answers follow-up questions |
-| **Qwen3-VL 235B** | Fireworks AI | Step verification: compares before/after screenshots to confirm action completion      |
+| **GPT-5.2**    | OpenAI       | Primary reasoning: generates step-by-step instructions and answers follow-up questions |
+| **Gemini 3 Flash** | Google AI Studio | Step verification: compares before/after screenshots to confirm action completion      |
 | **Qwen3-VL 30B**  | Fireworks AI | Coordinate detection: locates specific UI elements on screen                           |
 
 ## Privacy & Security
