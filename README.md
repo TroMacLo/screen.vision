@@ -1,14 +1,16 @@
 # Screen Vision
 
+![Screen Vision Demo](demo.gif)
+
 https://github.com/user-attachments/assets/c84fc58d-5dc0-4997-85dd-81dad27f9089
 
 ## Models Used
 
-| Model             | Provider     | Purpose                                                                                |
-| ----------------- | ------------ | -------------------------------------------------------------------------------------- |
-| **GPT-5.2**    | OpenAI       | Primary reasoning: generates step-by-step instructions and answers follow-up questions |
+| Model              | Provider         | Purpose                                                                                |
+| ------------------ | ---------------- | -------------------------------------------------------------------------------------- |
+| **GPT-5.2**        | OpenAI           | Primary reasoning: generates step-by-step instructions and answers follow-up questions |
 | **Gemini 3 Flash** | Google AI Studio | Step verification: compares before/after screenshots to confirm action completion      |
-| **Qwen3-VL 30B**  | Fireworks AI | Coordinate detection: locates specific UI elements on screen                           |
+| **Qwen3-VL 30B**   | Fireworks AI     | Coordinate detection: locates specific UI elements on screen                           |
 
 ## Privacy & Security
 
