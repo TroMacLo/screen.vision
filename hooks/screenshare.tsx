@@ -58,7 +58,7 @@ export const useScreenShare = create<ScreenShareState>((set, get) => {
   let previousImageData: ImageData | null = null;
   let temporaryPauseTimer: NodeJS.Timeout | null = null;
 
-  const imagePixelSize = 1_500_000;
+  const imagePixelSize = 1_300_000;
   const imageSizeForChangeDetection = 800_000;
 
   return {

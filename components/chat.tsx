@@ -90,7 +90,7 @@ export function Chat() {
   const [browserIsSafari, setBrowserIsSafari] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileBlocked, setShowMobileBlocked] = useState(false);
-  const [githubStars, setGithubStars] = useState(25);
+  const [githubStars, setGithubStars] = useState(252);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -387,7 +387,6 @@ export function Chat() {
         openSettings={openSettings}
         showLocalMode={false}
         grayMode={true}
-        showForTeams={true}
       />
 
       <MinimalTaskScreen goal={goal} onFeedbackSubmit={trackFeedbackSubmit} />

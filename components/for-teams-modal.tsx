@@ -13,7 +13,7 @@ interface ForTeamsModalProps {
 export function ForTeamsModal({ isOpen, onClose }: ForTeamsModalProps) {
   const posthog = usePostHog();
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
+  const [useCase, setUseCase] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -26,13 +26,13 @@ export function ForTeamsModal({ isOpen, onClose }: ForTeamsModalProps) {
   };
 
   const handleSubmit = async () => {
-    if (!email.trim() || !role.trim()) return;
+    if (!email.trim() || !useCase.trim()) return;
 
     setIsSubmitting(true);
 
     posthog.capture("for_teams_inquiry", {
       email: email.trim(),
-      role: role.trim(),
+      useCase: useCase.trim(),
     });
 
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -43,16 +43,16 @@ export function ForTeamsModal({ isOpen, onClose }: ForTeamsModalProps) {
 
   const handleClose = () => {
     setEmail("");
-    setRole("");
+    setUseCase("");
     setIsSubmitted(false);
     onClose();
   };
 
-  const canSubmit = email.trim() && role.trim() && !isSubmitting;
+  const canSubmit = email.trim() && useCase.trim() && !isSubmitting;
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
+      className="!fixed inset-0 bg-black/50 flex items-center justify-center !z-[100]"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
@@ -111,13 +111,13 @@ export function ForTeamsModal({ isOpen, onClose }: ForTeamsModalProps) {
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Your Role
+                  Which use case are you interested in?
                 </label>
                 <input
                   type="text"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  placeholder=""
+                  value={useCase}
+                  onChange={(e) => setUseCase(e.target.value)}
+                  placeholder="e.g. Customer support, onboarding, etc."
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-300 transition-all"
                 />
               </div>
