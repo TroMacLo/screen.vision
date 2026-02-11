@@ -50,7 +50,7 @@ export interface TaskContextType {
 
   autoCompleteTriggered: number;
 
-  reset: () => void;
+  reset: (options?: { preserveContext?: boolean }) => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -451,7 +451,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setIsLoadingFollowUp(false);
   };
 
-  const reset = () => {
+  const reset = (options?: { preserveContext?: boolean }) => {
+    const preserveContext = options?.preserveContext === true;
+
     stopChangeDetection();
     changeDetectionStartedRef.current = false;
     isCheckingStepRef.current = false;
@@ -467,7 +469,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     lastScreenshotRef.current = "";
     pendingFollowUpRef.current = "";
     setGoal("");
-    setChatContext("");
+
+    // Keep uploaded file context available when callers opt in.
+    if (!preserveContext) {
+      setChatContext("");
+    }
   };
 
   const taskContext: TaskContextType = {

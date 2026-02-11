@@ -1,30 +1,15 @@
 "use client";
 
-import type {
-  CreateUIMessage,
-  UIMessage,
-  UseChatHelpers,
-  UseChatOptions,
-} from "@ai-sdk/react";
-
-type ChatRequestOptions = {
-  headers?: Record<string, string> | Headers;
-  body?: object;
-  data?: any;
-};
 import { motion } from "framer-motion";
 import type React from "react";
-import {
-  useRef,
-  useEffect,
-  useCallback,
-  type Dispatch,
-  type SetStateAction,
-  useState,
-} from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { useWindowSize } from "usehooks-ts";
 
+import {
+  MAX_CONTEXT_FILE_SIZE_BYTES,
+  type AnalyzedContextFile,
+} from "@/lib/context-files";
 import { cn, getSystemInfo } from "@/lib/utils";
 
 import { ArrowUpIcon, SparklesIcon } from "./icons";
@@ -38,21 +23,24 @@ import {
   Globe,
   EyeOff,
   Trash,
+  X,
+  FileText
 } from "@geist-ui/icons";
-import { generateAction } from "@/lib/ai";
 
 export function MultimodalInput({
   input,
   setInput,
   isLoading,
-  stop,
-  messages,
   handleSubmit,
   className,
   placeholderText,
   showSuggestions,
   onSuggestedActionClicked,
   size,
+  files = [],
+  onFilesSelected,
+  onRemoveFile,
+  isAnalyzingFiles = false,
   contextText,
   setContextText,
 }: {
@@ -60,7 +48,7 @@ export function MultimodalInput({
   setInput: (value: string) => void;
   isLoading: boolean;
   stop?: () => void;
-  messages: Array<UIMessage>;
+  messages?: any[];
   handleSubmit: (
     event?: {
       preventDefault?: () => void;
@@ -72,11 +60,16 @@ export function MultimodalInput({
   showSuggestions?: boolean;
   onSuggestedActionClicked?: (action: string) => void;
   size?: "sm";
+  files?: AnalyzedContextFile[];
+  onFilesSelected?: (files: File[]) => Promise<void>;
+  onRemoveFile?: (id: string) => void;
+  isAnalyzingFiles?: boolean;
   contextText?: string;
   setContextText?: (value: string) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisFileInputRef = useRef<HTMLInputElement>(null);
+  const contextFileInputRef = useRef<HTMLInputElement>(null);
   const { width } = useWindowSize();
   const [suggestedActions, setSuggestedActions] = useState<
     { text: string; icon: string }[]
@@ -129,12 +122,9 @@ export function MultimodalInput({
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
-      // Prefer DOM value over localStorage to handle hydration
-      const finalValue = domValue;
-      setInput(finalValue);
+      setInput(domValue);
       adjustHeight();
     }
-    // Only run once after hydration
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -156,6 +146,13 @@ export function MultimodalInput({
     if (!files.length) return;
 
     try {
+      const oversized = files.find(
+        (file) => file.size > MAX_CONTEXT_FILE_SIZE_BYTES
+      );
+      if (oversized) {
+        throw new Error(`'${oversized.name}' exceeds the 30MB limit.`);
+      }
+
       const sections = await Promise.all(
         files.map(async (file) => {
           const isTextLike =
@@ -183,8 +180,12 @@ export function MultimodalInput({
 
       setContextText(merged);
       toast.success(`${files.length} file${files.length > 1 ? "s" : ""} added to chat context.`);
-    } catch {
-      toast.error("Could not read one or more files.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not read one or more files.";
+      toast.error(message);
     } finally {
       event.target.value = "";
     }
@@ -219,6 +220,25 @@ export function MultimodalInput({
     }
   };
 
+  const onFileInputChanged = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    if (!selectedFiles.length) return;
+
+    try {
+      await onFilesSelected?.(selectedFiles);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to analyze one or more files.";
+      toast.error(message);
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   return (
     <>
       <div className="relative w-full flex flex-col gap-4">
@@ -242,9 +262,7 @@ export function MultimodalInput({
               event.preventDefault();
 
               if (isLoading) {
-                toast.error(
-                  "Please wait for the model to finish its response!"
-                );
+                toast.error("Please wait for the model to finish its response!");
               } else {
                 submitForm();
               }
@@ -265,11 +283,68 @@ export function MultimodalInput({
         >
           {isLoading ? (
             <div className="size-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          ) : (
+            ) : (
             <ArrowUpIcon size={14} />
           )}
         </Button>
       </div>
+
+      {onFilesSelected && (
+        <div className="mt-1 rounded-2xl border border-gray-200 bg-white p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">
+            Upload files for context (images, PDFs, docs, spreadsheets, markdown) up to 30MB each.
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-8 px-3 text-xs rounded-md border border-gray-200"
+            onClick={() => analysisFileInputRef.current?.click()}
+            disabled={isAnalyzingFiles}
+          >
+            {isAnalyzingFiles ? "Analyzing..." : "Upload files"}
+          </Button>
+          <input
+            ref={analysisFileInputRef}
+            type="file"
+            className="hidden"
+            multiple
+            onChange={onFileInputChanged}
+            accept="image/*,.pdf,.md,.markdown,.txt,.doc,.docx,.xls,.xlsx,.csv,.json,.yaml,.yml"
+          />
+        </div>
+
+          {files.length > 0 ? (
+          <div className="max-h-44 overflow-y-auto space-y-2 pr-1">
+            {files.map((file) => {
+              return (
+                <div
+                  key={file.id}
+                  className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText size={14} />
+                    <span className="text-xs text-gray-700 truncate">
+                      {file.name} · {Math.ceil(file.size / 1024)} KB
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 rounded-full"
+                    onClick={() => onRemoveFile?.(file.id)}
+                  >
+                    <X size={12} />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+          ) : (
+          <p className="text-xs text-gray-500">No files uploaded yet.</p>
+          )}
+        </div>
+      )}
 
       {setContextText && (
         <div className="mt-1 space-y-2">
@@ -279,12 +354,12 @@ export function MultimodalInput({
               type="button"
               variant="ghost"
               className="h-7 px-2 text-xs rounded-md border border-gray-200"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => contextFileInputRef.current?.click()}
             >
               Add files
             </Button>
             <input
-              ref={fileInputRef}
+              ref={contextFileInputRef}
               type="file"
               className="hidden"
               multiple
