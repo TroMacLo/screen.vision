@@ -452,6 +452,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const reset = (options?: { preserveContext?: boolean }) => {
+    const preserveContext = options?.preserveContext === true;
+
     stopChangeDetection();
     changeDetectionStartedRef.current = false;
     isCheckingStepRef.current = false;
@@ -467,7 +469,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     lastScreenshotRef.current = "";
     pendingFollowUpRef.current = "";
     setGoal("");
-    if (!options?.preserveContext) {
+
+    // Keep uploaded file context available when callers opt in.
+    if (!preserveContext) {
       setChatContext("");
     }
   };
