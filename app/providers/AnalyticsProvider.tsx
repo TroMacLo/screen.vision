@@ -52,15 +52,19 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const sessionRef = useRef<QuestionSession | null>(null);
 
   useEffect(() => {
-    const systemInfo = getSystemInfo();
-    posthog.setPersonProperties({
-      browser: systemInfo.browser.browserName,
-      os: systemInfo.os.osName,
-      is_mobile:
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        ),
-    });
+    try {
+      const systemInfo = getSystemInfo();
+      posthog?.setPersonProperties({
+        browser: systemInfo.browser.browserName,
+        os: systemInfo.os.osName,
+        is_mobile:
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          ),
+      });
+    } catch {
+      // PostHog not initialized — analytics disabled
+    }
   }, [posthog]);
 
   useEffect(() => {
