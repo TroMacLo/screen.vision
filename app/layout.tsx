@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { TaskProvider } from "./providers/TaskProvider";
 import { AnalyticsProvider } from "./providers/AnalyticsProvider";
 import { SettingsProvider } from "./providers/SettingsProvider";
-import { Inter } from "next/font/google";
 import { PostHogProvider } from "./providers/PosthogProvider";
 import { ChunkErrorHandler } from "./providers/ChunkErrorHandler";
 
@@ -21,12 +20,6 @@ export const metadata = {
   },
 };
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
-});
-
 export default function RootLayout({
   children,
 }: {
@@ -37,7 +30,7 @@ export default function RootLayout({
       <body
         className={cn(
           GeistSans.className,
-          inter.variable,
+          "font-inter-var",
           "antialiased dark",
           "bg-background"
         )}
