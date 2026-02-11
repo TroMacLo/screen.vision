@@ -328,6 +328,9 @@ export function MultimodalInput({
           ) : (
           <p className="text-xs text-gray-500">No files uploaded yet.</p>
           )}
+        </div>
+      )}
+
       {setContextText && (
         <div className="mt-1 space-y-2">
           <div className="flex items-center justify-between">
