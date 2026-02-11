@@ -8,6 +8,11 @@ import { useTaskPip } from "@/hooks/pip";
 import { useTasks } from "@/app/providers/TaskProvider";
 import { useAnalytics } from "@/app/providers/AnalyticsProvider";
 import { useSettings } from "@/app/providers/SettingsProvider";
+import {
+  analyzeContextFiles,
+  buildContextFromFiles,
+  type AnalyzedContextFile,
+} from "@/lib/context-files";
 import { MinimalTaskScreen } from "./task-screen";
 import { SafariSettingsGuide } from "./safari-settings-guide";
 import { ScreenshareModal } from "./screenshare-modal";
@@ -18,22 +23,18 @@ import { LoaderIcon } from "./icons";
 
 const HISTORY_STATE_KEY = "screen-vision-session";
 
-// Detect if browser is Safari
 const isSafari = (): boolean => {
   if (typeof window === "undefined") return false;
   const userAgent = navigator.userAgent;
   return userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") === -1;
 };
 
-// Detect if device is mobile
 const isMobileDevice = (): boolean => {
   if (typeof window === "undefined") return false;
 
-  // Check for touch capability combined with small screen
   const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   const isSmallScreen = window.innerWidth <= 768;
 
-  // Also check user agent for mobile devices
   const mobileUserAgent =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
@@ -47,21 +48,17 @@ const SCREENSHARE_MODAL_ACCEPTED_KEY = "screenshare-modal-accepted";
 
 export function Chat() {
   const { isSharing, stopSharing } = useScreenShare();
-
   const { openPipWindow } = useTaskPip();
-
   const taskContext = useTasks();
-
   const { openSettings } = useSettings();
 
   const {
-    tasks,
-    isLoading: isLoadingTask,
-    onNextTask,
     triggerFirstTask,
     reset: resetTasks,
     goal,
     setGoal,
+    chatContext,
+    setChatContext,
   } = taskContext;
 
   const hasTriggeredFirstTask = React.useRef(false);
@@ -74,17 +71,16 @@ export function Chat() {
     trackScreenshareDeclined,
     trackScreenshareStarted,
     trackStartOverClicked,
-    trackTaskRefreshed,
-    trackAllTasksCompleted,
     trackSuggestedActionClicked,
     trackFeedbackSubmit,
   } = useAnalytics();
 
   const [input, setInput] = React.useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<AnalyzedContextFile[]>([]);
+  const [isAnalyzingFiles, setIsAnalyzingFiles] = useState(false);
   const [hasSubmittedProblem, setHasSubmittedProblem] = useState(false);
   const [showScreenshareModal, setShowScreenshareModal] = useState(false);
   const [showSafariSettingsGuide, setShowSafariSettingsGuide] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
 
   const [safariSettingsCompleted, setSafariSettingsCompleted] = useState(false);
   const [hasAcceptedModalBefore, setHasAcceptedModalBefore] = useState(false);
@@ -94,7 +90,6 @@ export function Chat() {
   const [githubStars, setGithubStars] = useState(252);
 
   useEffect(() => {
-    setIsHydrated(true);
     setSafariSettingsCompleted(
       localStorage.getItem(SAFARI_SETTINGS_STORAGE_KEY) === "true"
     );
@@ -112,7 +107,40 @@ export function Chat() {
       .catch(() => setGithubStars(25));
   }, []);
 
-  // Handler to complete Safari settings and persist to localStorage
+  useEffect(() => {
+    setChatContext(buildContextFromFiles(uploadedFiles));
+  }, [uploadedFiles, setChatContext]);
+
+  const handleFilesSelected = async (files: File[]) => {
+    setIsAnalyzingFiles(true);
+    try {
+      const analyzed = await analyzeContextFiles(files);
+      setUploadedFiles((prev) => [...prev, ...analyzed]);
+      toast.success(
+        `${analyzed.length} file${analyzed.length > 1 ? "s" : ""} analyzed and added to context.`
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to analyze one or more files."
+      );
+    } finally {
+      setIsAnalyzingFiles(false);
+    }
+  };
+
+  const handleRemoveFile = (id: string) => {
+    setUploadedFiles((prev) => prev.filter((file) => file.id !== id));
+  };
+
+  const clearSession = useCallback(() => {
+    resetTasks();
+    setInput("");
+    setUploadedFiles([]);
+    setChatContext("");
+    setHasSubmittedProblem(false);
+    hasTriggeredFirstTask.current = false;
+  }, [resetTasks, setChatContext]);
+
   const handleSafariSettingsComplete = () => {
     setSafariSettingsCompleted(true);
     localStorage.setItem(SAFARI_SETTINGS_STORAGE_KEY, "true");
@@ -139,45 +167,46 @@ export function Chat() {
     const text = currentInput || input;
     const trimmedText = text.trim();
 
-    if (trimmedText.length > 0) {
-      if (trimmedText.length < 7) {
-        toast.error("Please describe your problem in more detail.");
-        return;
-      }
+    if (trimmedText.length === 0) return;
 
-      if (trimmedText.length > 400) {
-        toast.error("Please keep your description under 400 characters.");
-        return;
-      }
+    if (trimmedText.length < 7) {
+      toast.error("Please describe your problem in more detail.");
+      return;
+    }
 
-      if (isMobile) {
-        setShowMobileBlocked(true);
-        return;
-      }
-      resetTasks();
-      hasTriggeredFirstTask.current = false;
-      startQuestionSession(trimmedText);
-      setGoal(trimmedText);
-      setHasSubmittedProblem(true);
+    if (trimmedText.length > 400) {
+      toast.error("Please keep your description under 400 characters.");
+      return;
+    }
 
-      if (browserIsSafari && !safariSettingsCompleted) {
-        setShowSafariSettingsGuide(true);
-        return;
-      }
+    if (isMobile) {
+      setShowMobileBlocked(true);
+      return;
+    }
 
-      if (hasAcceptedModalBefore) {
-        const success = await requestScreenShare();
-        if (!success) {
-          resetTasks();
-          setHasSubmittedProblem(false);
-        } else {
-          setInput("");
-          trackScreenshareStarted();
-          history.pushState({ [HISTORY_STATE_KEY]: true }, "");
-        }
+    resetTasks({ preserveContext: true });
+    hasTriggeredFirstTask.current = false;
+    startQuestionSession(trimmedText);
+    setGoal(trimmedText);
+    setHasSubmittedProblem(true);
+
+    if (browserIsSafari && !safariSettingsCompleted) {
+      setShowSafariSettingsGuide(true);
+      return;
+    }
+
+    if (hasAcceptedModalBefore) {
+      const success = await requestScreenShare();
+      if (!success) {
+        resetTasks({ preserveContext: true });
+        setHasSubmittedProblem(false);
       } else {
-        setShowScreenshareModal(true);
+        setInput("");
+        trackScreenshareStarted();
+        history.pushState({ [HISTORY_STATE_KEY]: true }, "");
       }
+    } else {
+      setShowScreenshareModal(true);
     }
   };
 
@@ -198,7 +227,7 @@ export function Chat() {
       localStorage.setItem(SCREENSHARE_MODAL_ACCEPTED_KEY, "true");
       history.pushState({ [HISTORY_STATE_KEY]: true }, "");
     } else {
-      resetTasks();
+      resetTasks({ preserveContext: true });
       setHasSubmittedProblem(false);
     }
   };
@@ -230,6 +259,7 @@ export function Chat() {
   useEffect(() => {
     const shouldShowSafariGuide =
       isSharing && browserIsSafari && !safariSettingsCompleted;
+
     if (hasSubmittedProblem && isSharing && !shouldShowSafariGuide) {
       setTimeout(() => {
         openPipWindow();
@@ -252,11 +282,8 @@ export function Chat() {
   const handleStartOver = useCallback(() => {
     trackStartOverClicked();
     stopSharing();
-    resetTasks();
-    setHasSubmittedProblem(false);
-    setInput("");
-    hasTriggeredFirstTask.current = false;
-  }, [trackStartOverClicked, stopSharing, resetTasks]);
+    clearSession();
+  }, [trackStartOverClicked, stopSharing, clearSession]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -269,7 +296,6 @@ export function Chat() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [isSharing, handleStartOver]);
 
-  // Show Safari settings guide before screen sharing if needed
   if (showSafariSettingsGuide && !isSharing) {
     return (
       <>
@@ -295,7 +321,6 @@ export function Chat() {
     );
   }
 
-  // Step 1 & 2: Show input or screenshare prompt with smooth transition
   if (!isSharing) {
     return (
       <>
@@ -305,7 +330,7 @@ export function Chat() {
           onClose={() => {
             trackScreenshareDeclined();
             setShowScreenshareModal(false);
-            resetTasks();
+            resetTasks({ preserveContext: true });
             setHasSubmittedProblem(false);
           }}
           isLoading={isRequestingScreenShare}
@@ -345,11 +370,13 @@ export function Chat() {
                       setInput={setInput}
                       handleSubmit={handleSubmit}
                       isLoading={false}
-                      stop={() => {}}
-                      messages={[]}
                       placeholderText="Describe your problem here..."
                       showSuggestions
                       onSuggestedActionClicked={trackSuggestedActionClicked}
+                      files={uploadedFiles}
+                      onFilesSelected={handleFilesSelected}
+                      onRemoveFile={handleRemoveFile}
+                      isAnalyzingFiles={isAnalyzingFiles}
                     />
                   </div>
                 </>
@@ -377,7 +404,6 @@ export function Chat() {
     );
   }
 
-  // Step 3: Problem submitted and sharing - show Safari guide if needed, otherwise TaskScreen
   if (showSafariGuide) {
     return (
       <>
