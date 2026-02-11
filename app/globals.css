@@ -6,6 +6,11 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --font-inter: "Inter", "Inter var", system-ui, -apple-system, sans-serif;
+}
+
+.font-inter-var {
+  --font-inter: "Inter", "Inter var", system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
