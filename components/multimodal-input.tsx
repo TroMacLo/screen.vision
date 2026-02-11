@@ -65,7 +65,8 @@ export function MultimodalInput({
   setContextText?: (value: string) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisFileInputRef = useRef<HTMLInputElement>(null);
+  const contextFileInputRef = useRef<HTMLInputElement>(null);
   const { width } = useWindowSize();
   const [suggestedActions, setSuggestedActions] = useState<
     { text: string; icon: string }[]
@@ -284,13 +285,13 @@ export function MultimodalInput({
             type="button"
             variant="ghost"
             className="h-8 px-3 text-xs rounded-md border border-gray-200"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => analysisFileInputRef.current?.click()}
             disabled={isAnalyzingFiles}
           >
             {isAnalyzingFiles ? "Analyzing..." : "Upload files"}
           </Button>
           <input
-            ref={fileInputRef}
+            ref={analysisFileInputRef}
             type="file"
             className="hidden"
             multiple
@@ -339,12 +340,12 @@ export function MultimodalInput({
               type="button"
               variant="ghost"
               className="h-7 px-2 text-xs rounded-md border border-gray-200"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => contextFileInputRef.current?.click()}
             >
               Add files
             </Button>
             <input
-              ref={fileInputRef}
+              ref={contextFileInputRef}
               type="file"
               className="hidden"
               multiple
