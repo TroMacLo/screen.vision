@@ -32,6 +32,8 @@ export interface TaskContextType {
 
   goal: string;
   setGoal: (goal: string) => void;
+  chatContext: string;
+  setChatContext: (chatContext: string) => void;
 
   onNextTask: () => void;
   onRefreshTask: () => void;
@@ -55,6 +57,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [goal, setGoal] = useState("");
+  const [chatContext, setChatContext] = useState("");
 
   const { settings, isUsingLocalProvider } = useSettings();
 
@@ -153,7 +156,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         settings,
         tasksRef.current.map((item) => item.text),
         osName,
-        followUpContext
+        followUpContext,
+        chatContext
       );
 
       lastScreenshotRef.current = imageDataUrl;
@@ -432,6 +436,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         question,
         currentTaskText,
         settings,
+        chatContext,
         (streamedMessage) => {
           updateCurrentFollowUpAnswer(streamedMessage);
         }
@@ -462,6 +467,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     lastScreenshotRef.current = "";
     pendingFollowUpRef.current = "";
     setGoal("");
+    setChatContext("");
   };
 
   const taskContext: TaskContextType = {
@@ -470,6 +476,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     hasExceededMaxSteps,
     goal,
     setGoal,
+    chatContext,
+    setChatContext,
     onNextTask,
     onRefreshTask,
     triggerFirstTask,
