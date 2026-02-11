@@ -6,7 +6,10 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useWindowSize } from "usehooks-ts";
 
-import type { AnalyzedContextFile } from "@/lib/context-files";
+import {
+  MAX_CONTEXT_FILE_SIZE_BYTES,
+  type AnalyzedContextFile,
+} from "@/lib/context-files";
 import { cn, getSystemInfo } from "@/lib/utils";
 
 import { ArrowUpIcon, SparklesIcon } from "./icons";
@@ -143,6 +146,13 @@ export function MultimodalInput({
     if (!files.length) return;
 
     try {
+      const oversized = files.find(
+        (file) => file.size > MAX_CONTEXT_FILE_SIZE_BYTES
+      );
+      if (oversized) {
+        throw new Error(`'${oversized.name}' exceeds the 30MB limit.`);
+      }
+
       const sections = await Promise.all(
         files.map(async (file) => {
           const isTextLike =
@@ -170,8 +180,12 @@ export function MultimodalInput({
 
       setContextText(merged);
       toast.success(`${files.length} file${files.length > 1 ? "s" : ""} added to chat context.`);
-    } catch {
-      toast.error("Could not read one or more files.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not read one or more files.";
+      toast.error(message);
     } finally {
       event.target.value = "";
     }
