@@ -373,10 +373,8 @@ export function Chat() {
                       placeholderText="Describe your problem here..."
                       showSuggestions
                       onSuggestedActionClicked={trackSuggestedActionClicked}
-                      files={uploadedFiles}
-                      onFilesSelected={handleFilesSelected}
-                      onRemoveFile={handleRemoveFile}
-                      isAnalyzingFiles={isAnalyzingFiles}
+                      contextText={chatContext}
+                      setContextText={setChatContext}
                     />
                   </div>
                 </>
