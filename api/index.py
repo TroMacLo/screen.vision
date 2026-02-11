@@ -110,18 +110,21 @@ def _analyze_spreadsheet_file(contents: bytes) -> str:
     workbook = load_workbook(BytesIO(contents), data_only=True, read_only=True)
     snippets = []
 
-    for sheet in workbook.worksheets[:5]:
-        snippets.append(f"Sheet: {sheet.title}")
-        row_count = 0
-        for row in sheet.iter_rows(values_only=True):
-            if row_count >= 120:
-                snippets.append("...[truncated]")
-                break
-            values = [str(cell) if cell is not None else "" for cell in row]
-            snippets.append(" | ".join(values))
-            row_count += 1
+    try:
+        for sheet in workbook.worksheets[:5]:
+            snippets.append(f"Sheet: {sheet.title}")
+            row_count = 0
+            for row in sheet.iter_rows(values_only=True):
+                if row_count >= 120:
+                    snippets.append("...[truncated]")
+                    break
+                values = [str(cell) if cell is not None else "" for cell in row]
+                snippets.append(" | ".join(values))
+                row_count += 1
 
-    return _truncate_text("\n".join(snippets))
+        return _truncate_text("\n".join(snippets))
+    finally:
+        workbook.close()
 
 
 def _analyze_image_file(contents: bytes, mime_type: str, filename: str) -> str:

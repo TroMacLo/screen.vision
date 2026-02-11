@@ -377,6 +377,8 @@ export function Chat() {
                       onFilesSelected={handleFilesSelected}
                       onRemoveFile={handleRemoveFile}
                       isAnalyzingFiles={isAnalyzingFiles}
+                      contextText={chatContext}
+                      setContextText={setChatContext}
                     />
                   </div>
                 </>

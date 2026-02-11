@@ -34,18 +34,10 @@ export async function analyzeContextFiles(
     formData.append("files", file, file.name);
   });
 
-  let response: Response;
-
-  try {
-    response = await fetch(`${aiApiUrl}/file-context`, {
-      method: "POST",
-      body: formData,
-    });
-  } catch {
-    throw new Error(
-      "Unable to reach the file analysis API. Make sure your API is running and NEXT_PUBLIC_API_URL points to it."
-    );
-  }
+  const response = await fetch(`${aiApiUrl}/file-context`, {
+    method: "POST",
+    body: formData,
+  });
 
   if (!response.ok) {
     throw new Error(`File analysis failed (${response.status}).`);

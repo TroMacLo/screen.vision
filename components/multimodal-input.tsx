@@ -6,7 +6,10 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useWindowSize } from "usehooks-ts";
 
-import type { AnalyzedContextFile } from "@/lib/context-files";
+import {
+  MAX_CONTEXT_FILE_SIZE_BYTES,
+  type AnalyzedContextFile,
+} from "@/lib/context-files";
 import { cn, getSystemInfo } from "@/lib/utils";
 
 import { ArrowUpIcon, SparklesIcon } from "./icons";
@@ -38,6 +41,8 @@ export function MultimodalInput({
   onFilesSelected,
   onRemoveFile,
   isAnalyzingFiles = false,
+  contextText,
+  setContextText,
 }: {
   input: string;
   setInput: (value: string) => void;
@@ -59,9 +64,12 @@ export function MultimodalInput({
   onFilesSelected?: (files: File[]) => Promise<void>;
   onRemoveFile?: (id: string) => void;
   isAnalyzingFiles?: boolean;
+  contextText?: string;
+  setContextText?: (value: string) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisFileInputRef = useRef<HTMLInputElement>(null);
+  const contextFileInputRef = useRef<HTMLInputElement>(null);
   const { width } = useWindowSize();
   const [suggestedActions, setSuggestedActions] = useState<
     { text: string; icon: string }[]
@@ -123,6 +131,64 @@ export function MultimodalInput({
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
     adjustHeight();
+  };
+
+  const handleContextInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContextText?.(event.target.value);
+  };
+
+  const appendUploadedFilesToContext = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!setContextText) return;
+
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    try {
+      const oversized = files.find(
+        (file) => file.size > MAX_CONTEXT_FILE_SIZE_BYTES
+      );
+      if (oversized) {
+        throw new Error(`'${oversized.name}' exceeds the 30MB limit.`);
+      }
+
+      const sections = await Promise.all(
+        files.map(async (file) => {
+          const isTextLike =
+            file.type.startsWith("text/") ||
+            /\.(md|txt|json|yaml|yml|csv|log|xml|html|js|ts|tsx|py|java|go|rb|rs|sql)$/i.test(
+              file.name
+            );
+
+          if (!isTextLike) {
+            return `File: ${file.name}\n(Non-text file attached. Summarize key details manually.)`;
+          }
+
+          const content = await file.text();
+          const trimmed = content.trim();
+          const clipped =
+            trimmed.length > 8000 ? `${trimmed.slice(0, 8000)}\n...[truncated]` : trimmed;
+
+          return `File: ${file.name}\n\n${clipped}`;
+        })
+      );
+
+      const merged = [contextText?.trim(), ...sections]
+        .filter(Boolean)
+        .join("\n\n---\n\n");
+
+      setContextText(merged);
+      toast.success(`${files.length} file${files.length > 1 ? "s" : ""} added to chat context.`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not read one or more files.";
+      toast.error(message);
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const submitForm = useCallback(() => {
@@ -233,13 +299,13 @@ export function MultimodalInput({
             type="button"
             variant="ghost"
             className="h-8 px-3 text-xs rounded-md border border-gray-200"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => analysisFileInputRef.current?.click()}
             disabled={isAnalyzingFiles}
           >
             {isAnalyzingFiles ? "Analyzing..." : "Upload files"}
           </Button>
           <input
-            ref={fileInputRef}
+            ref={analysisFileInputRef}
             type="file"
             className="hidden"
             multiple
@@ -277,6 +343,36 @@ export function MultimodalInput({
           ) : (
           <p className="text-xs text-gray-500">No files uploaded yet.</p>
           )}
+        </div>
+      )}
+
+      {setContextText && (
+        <div className="mt-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500">Add optional files and knowledge for this chat</p>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-7 px-2 text-xs rounded-md border border-gray-200"
+              onClick={() => contextFileInputRef.current?.click()}
+            >
+              Add files
+            </Button>
+            <input
+              ref={contextFileInputRef}
+              type="file"
+              className="hidden"
+              multiple
+              onChange={appendUploadedFilesToContext}
+            />
+          </div>
+          <Textarea
+            placeholder="Optional: paste notes, links, or file content for this chat..."
+            value={contextText || ""}
+            onChange={handleContextInput}
+            className="min-h-[90px] resize-y rounded-2xl !text-sm bg-white border border-gray-200 focus:outline-none focus:ring-0 focus:border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
+            rows={4}
+          />
         </div>
       )}
 
