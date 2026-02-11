@@ -470,7 +470,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!options?.preserveContext) {
       setChatContext("");
     }
-    setChatContext("");
   };
 
   const taskContext: TaskContextType = {
