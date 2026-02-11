@@ -32,6 +32,8 @@ export interface TaskContextType {
 
   goal: string;
   setGoal: (goal: string) => void;
+  chatContext: string;
+  setChatContext: (chatContext: string) => void;
 
   onNextTask: () => void;
   onRefreshTask: () => void;
@@ -48,13 +50,14 @@ export interface TaskContextType {
 
   autoCompleteTriggered: number;
 
-  reset: () => void;
+  reset: (options?: { preserveContext?: boolean }) => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [goal, setGoal] = useState("");
+  const [chatContext, setChatContext] = useState("");
 
   const { settings, isUsingLocalProvider } = useSettings();
 
@@ -153,7 +156,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         settings,
         tasksRef.current.map((item) => item.text),
         osName,
-        followUpContext
+        followUpContext,
+        chatContext
       );
 
       lastScreenshotRef.current = imageDataUrl;
@@ -432,6 +436,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         question,
         currentTaskText,
         settings,
+        chatContext,
         (streamedMessage) => {
           updateCurrentFollowUpAnswer(streamedMessage);
         }
@@ -446,7 +451,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setIsLoadingFollowUp(false);
   };
 
-  const reset = () => {
+  const reset = (options?: { preserveContext?: boolean }) => {
     stopChangeDetection();
     changeDetectionStartedRef.current = false;
     isCheckingStepRef.current = false;
@@ -462,6 +467,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     lastScreenshotRef.current = "";
     pendingFollowUpRef.current = "";
     setGoal("");
+    if (!options?.preserveContext) {
+      setChatContext("");
+    }
   };
 
   const taskContext: TaskContextType = {
@@ -470,6 +478,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     hasExceededMaxSteps,
     goal,
     setGoal,
+    chatContext,
+    setChatContext,
     onNextTask,
     onRefreshTask,
     triggerFirstTask,

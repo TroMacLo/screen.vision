@@ -201,12 +201,13 @@ export async function generateAction(
   settings: ApiSettings,
   completedSteps?: string[],
   osName?: string,
-  followUpContext?: FollowUpContext
+  followUpContext?: FollowUpContext,
+  chatContext?: string
 ) {
   const maxRetries = 3;
   let lastError: unknown;
 
-  const systemPrompt = buildActionPrompt(goal, osName, completedSteps);
+  const systemPrompt = buildActionPrompt(goal, osName, completedSteps, chatContext);
 
   let messages: Message[];
 
@@ -270,10 +271,11 @@ export async function generateHelpResponse(
   userQuestion: string,
   previousMessage: string,
   settings: ApiSettings,
+  chatContext?: string,
   onStream?: (message: string) => void
 ) {
   try {
-    const systemPrompt = buildHelpPrompt(goal, previousMessage || undefined);
+    const systemPrompt = buildHelpPrompt(goal, previousMessage || undefined, chatContext);
 
     const messages: Message[] = [
       { role: "system", content: systemPrompt },
