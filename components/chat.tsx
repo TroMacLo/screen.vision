@@ -62,6 +62,8 @@ export function Chat() {
     reset: resetTasks,
     goal,
     setGoal,
+    chatContext,
+    setChatContext,
   } = taskContext;
 
   const hasTriggeredFirstTask = React.useRef(false);
@@ -255,8 +257,9 @@ export function Chat() {
     resetTasks();
     setHasSubmittedProblem(false);
     setInput("");
+    setChatContext("");
     hasTriggeredFirstTask.current = false;
-  }, [trackStartOverClicked, stopSharing, resetTasks]);
+  }, [trackStartOverClicked, stopSharing, resetTasks, setChatContext]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -350,6 +353,8 @@ export function Chat() {
                       placeholderText="Describe your problem here..."
                       showSuggestions
                       onSuggestedActionClicked={trackSuggestedActionClicked}
+                      contextText={chatContext}
+                      setContextText={setChatContext}
                     />
                   </div>
                 </>

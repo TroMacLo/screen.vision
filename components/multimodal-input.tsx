@@ -53,6 +53,8 @@ export function MultimodalInput({
   showSuggestions,
   onSuggestedActionClicked,
   size,
+  contextText,
+  setContextText,
 }: {
   input: string;
   setInput: (value: string) => void;
@@ -70,8 +72,11 @@ export function MultimodalInput({
   showSuggestions?: boolean;
   onSuggestedActionClicked?: (action: string) => void;
   size?: "sm";
+  contextText?: string;
+  setContextText?: (value: string) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { width } = useWindowSize();
   const [suggestedActions, setSuggestedActions] = useState<
     { text: string; icon: string }[]
@@ -136,6 +141,53 @@ export function MultimodalInput({
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
     adjustHeight();
+  };
+
+  const handleContextInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContextText?.(event.target.value);
+  };
+
+  const appendUploadedFilesToContext = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!setContextText) return;
+
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    try {
+      const sections = await Promise.all(
+        files.map(async (file) => {
+          const isTextLike =
+            file.type.startsWith("text/") ||
+            /\.(md|txt|json|yaml|yml|csv|log|xml|html|js|ts|tsx|py|java|go|rb|rs|sql)$/i.test(
+              file.name
+            );
+
+          if (!isTextLike) {
+            return `File: ${file.name}\n(Non-text file attached. Summarize key details manually.)`;
+          }
+
+          const content = await file.text();
+          const trimmed = content.trim();
+          const clipped =
+            trimmed.length > 8000 ? `${trimmed.slice(0, 8000)}\n...[truncated]` : trimmed;
+
+          return `File: ${file.name}\n\n${clipped}`;
+        })
+      );
+
+      const merged = [contextText?.trim(), ...sections]
+        .filter(Boolean)
+        .join("\n\n---\n\n");
+
+      setContextText(merged);
+      toast.success(`${files.length} file${files.length > 1 ? "s" : ""} added to chat context.`);
+    } catch {
+      toast.error("Could not read one or more files.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const submitForm = useCallback(() => {
@@ -218,6 +270,36 @@ export function MultimodalInput({
           )}
         </Button>
       </div>
+
+      {setContextText && (
+        <div className="mt-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500">Add optional files and knowledge for this chat</p>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-7 px-2 text-xs rounded-md border border-gray-200"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Add files
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              multiple
+              onChange={appendUploadedFilesToContext}
+            />
+          </div>
+          <Textarea
+            placeholder="Optional: paste notes, links, or file content for this chat..."
+            value={contextText || ""}
+            onChange={handleContextInput}
+            className="min-h-[90px] resize-y rounded-2xl !text-sm bg-white border border-gray-200 focus:outline-none focus:ring-0 focus:border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0"
+            rows={4}
+          />
+        </div>
+      )}
 
       <div className="h-8">
         {showSuggestions && (
